@@ -20,6 +20,7 @@ import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,7 +103,7 @@ class AccountServiceIntegrationTest {
     // ------------------------------------------------------------------
 
     @BeforeAll
-    void createSchema() throws Exception {
+    void createSchema() throws SQLException {
         try (Connection connection = openContainerConnection();
              Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE account (" +
@@ -117,7 +118,7 @@ class AccountServiceIntegrationTest {
     // ------------------------------------------------------------------
 
     @BeforeEach
-    void seedData() throws Exception {
+    void seedData() throws SQLException {
         try (Connection connection = openContainerConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate("DELETE FROM account");
@@ -126,7 +127,7 @@ class AccountServiceIntegrationTest {
         }
     }
 
-    private Connection openContainerConnection() throws Exception {
+    private Connection openContainerConnection() throws SQLException {
         return DriverManager.getConnection(oracle.getJdbcUrl(), oracle.getUsername(), oracle.getPassword());
     }
 
