@@ -1,0 +1,18 @@
+target/
+*.class
+*.jar
+*.war
+
+# Atomikos transaction logs (written at runtime to /tmp)
+atomikos-logs/
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db

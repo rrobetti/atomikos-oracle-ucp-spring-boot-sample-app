@@ -1,0 +1,32 @@
+spring:
+  # DataSource auto-configuration is disabled in AtomikosUcpSampleApp because
+  # the datasource is built programmatically (DataSourceConfig).  There are no
+  # spring.datasource.* properties here.
+
+  # Disable Spring Boot's embedded-database schema/data initializer.
+  # Schema management is handled explicitly inside the integration tests.
+  sql:
+    init:
+      mode: never
+
+  # Spring Boot 3.x has no JTA auto-configuration for Atomikos; everything is
+  # wired manually in TransactionManagerConfig.
+  transaction:
+    default-timeout: 300
+
+# ---------------------------------------------------------------------------
+# Datasource properties consumed by DataSourceConfig.
+# In tests these are overridden by @DynamicPropertySource from the
+# OracleContainer Testcontainer.
+# ---------------------------------------------------------------------------
+datasource:
+  url:      jdbc:oracle:thin:@//localhost:1521/XEPDB1
+  username: testuser
+  password: testpwd
+  min-pool-size: 1
+  max-pool-size: 3
+
+logging:
+  level:
+    com.atomikos: WARN
+    oracle.ucp: WARN
