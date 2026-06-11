@@ -127,6 +127,10 @@ class AccountServiceIntegrationTest {
         }
     }
 
+    /**
+     * Opens a direct JDBC connection to the Oracle test container.
+     * Callers close the returned connection with try-with-resources.
+     */
     private Connection openContainerConnection() throws SQLException {
         return DriverManager.getConnection(oracle.getJdbcUrl(), oracle.getUsername(), oracle.getPassword());
     }
