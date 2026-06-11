@@ -18,6 +18,9 @@ import org.testcontainers.containers.OracleContainer;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -72,9 +75,17 @@ class AccountServiceIntegrationTest {
      */
     @DynamicPropertySource
     static void registerOracleProperties(DynamicPropertyRegistry registry) {
-        registry.add("datasource.url",      oracle::getJdbcUrl);
-        registry.add("datasource.username", oracle::getUsername);
-        registry.add("datasource.password", oracle::getPassword);
+        if (!oracle.isRunning()) {
+            oracle.start();
+        }
+
+        String jdbcUrl = oracle.getJdbcUrl();
+        String username = oracle.getUsername();
+        String password = oracle.getPassword();
+
+        registry.add("datasource.url", () -> jdbcUrl);
+        registry.add("datasource.username", () -> username);
+        registry.add("datasource.password", () -> password);
     }
 
     @Autowired
@@ -91,12 +102,14 @@ class AccountServiceIntegrationTest {
     // ------------------------------------------------------------------
 
     @BeforeAll
-    void createSchema() {
-        // Plain CREATE TABLE — safe because @BeforeAll runs once on a fresh container.
-        jdbcTemplate.execute("CREATE TABLE account (" +
-                "  id      NUMBER(19)     PRIMARY KEY, " +
-                "  balance NUMBER(19, 2)  NOT NULL" +
-                ")");
+    void createSchema() throws Exception {
+        try (Connection connection = openContainerConnection();
+             Statement statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE account (" +
+                    "  id      NUMBER(19)     PRIMARY KEY, " +
+                    "  balance NUMBER(19, 2)  NOT NULL" +
+                    ")");
+        }
     }
 
     // ------------------------------------------------------------------
@@ -104,10 +117,17 @@ class AccountServiceIntegrationTest {
     // ------------------------------------------------------------------
 
     @BeforeEach
-    void seedData() {
-        jdbcTemplate.execute("DELETE FROM account");
-        jdbcTemplate.update("INSERT INTO account VALUES (1, 1000.00)");
-        jdbcTemplate.update("INSERT INTO account VALUES (2,  500.00)");
+    void seedData() throws Exception {
+        try (Connection connection = openContainerConnection();
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("DELETE FROM account");
+            statement.executeUpdate("INSERT INTO account VALUES (1, 1000.00)");
+            statement.executeUpdate("INSERT INTO account VALUES (2,  500.00)");
+        }
+    }
+
+    private Connection openContainerConnection() throws Exception {
+        return DriverManager.getConnection(oracle.getJdbcUrl(), oracle.getUsername(), oracle.getPassword());
     }
 
     // ------------------------------------------------------------------
@@ -222,4 +242,3 @@ class AccountServiceIntegrationTest {
         assertThat(atomikosDs.getXaDataSource()).isInstanceOf(PoolXADataSource.class);
     }
 }
-
