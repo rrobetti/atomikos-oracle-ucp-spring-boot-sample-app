@@ -18,12 +18,9 @@ import org.springframework.transaction.jta.JtaTransactionManager;
  * It does <em>not</em> maintain a connection pool — that role belongs entirely
  * to Oracle UCP (see {@link DataSourceConfig}).
  *
- * <h3>javax → jakarta bridge</h3>
- * <p>Atomikos 6.0.1 implements {@code javax.transaction.TransactionManager} while
- * Spring Boot 3's {@code JtaTransactionManager} requires
- * {@code jakarta.transaction.TransactionManager}.  {@link AtomikosTransactionBridge}
- * is a thin type-system shim that converts between the two namespaces without
- * altering any transaction semantics.
+ * <p>This project uses Atomikos 6.0.1's Jakarta-native artifacts, so
+ * {@link UserTransactionManager} can be wired directly into Spring Boot 3's
+ * {@link JtaTransactionManager}.
  */
 @Configuration
 @EnableTransactionManagement
@@ -31,7 +28,7 @@ public class TransactionManagerConfig {
 
     /**
      * Atomikos {@link UserTransactionManager} — the core JTA transaction
-     * coordinator (javax namespace).
+     * coordinator.
      *
      * <p>{@code init()} starts the Atomikos transaction service (including the
      * recovery thread); {@code close()} shuts it down gracefully on context close.
@@ -45,27 +42,16 @@ public class TransactionManagerConfig {
     }
 
     /**
-     * {@link AtomikosTransactionBridge} adapts Atomikos's {@code javax.transaction.*}
-     * interfaces to the {@code jakarta.transaction.*} interfaces required by Spring 6.
-     */
-    @Bean
-    public AtomikosTransactionBridge atomikosTransactionBridge(
-            UserTransactionManager atomikosUserTransactionManager) {
-        return new AtomikosTransactionBridge(atomikosUserTransactionManager);
-    }
-
-    /**
      * Spring {@link JtaTransactionManager} — bridges Spring's
-     * {@code @Transactional} abstraction to Atomikos JTA via the
-     * {@link AtomikosTransactionBridge}.
+     * {@code @Transactional} abstraction to Atomikos JTA.
      */
     @Bean
     @DependsOn("atomikosUserTransactionManager")
-    public JtaTransactionManager transactionManager(AtomikosTransactionBridge bridge) {
+    public JtaTransactionManager transactionManager(
+            UserTransactionManager atomikosUserTransactionManager) {
         JtaTransactionManager tm = new JtaTransactionManager();
-        // Both interfaces are satisfied by the same bridge instance.
-        tm.setTransactionManager(bridge);
-        tm.setUserTransaction(bridge);
+        tm.setTransactionManager(atomikosUserTransactionManager);
+        tm.setUserTransaction(atomikosUserTransactionManager);
         // Required when using Atomikos with non-default isolation levels.
         tm.setAllowCustomIsolationLevels(true);
         return tm;

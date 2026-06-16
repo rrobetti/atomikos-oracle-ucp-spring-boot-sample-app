@@ -156,7 +156,6 @@ mvn package -DskipTests   # build JAR without tests
 src/main/java/com/example/atomikos/
 ├── AtomikosUcpSampleApp.java              Spring Boot entry point
 ├── config/
-│   ├── AtomikosTransactionBridge.java     javax→jakarta transaction bridge
 │   ├── DataSourceConfig.java              UCP PoolXADataSource + AtomikosNonPoolingDataSourceBean
 │   └── TransactionManagerConfig.java      Atomikos UserTransactionManager + JtaTransactionManager
 └── service/
